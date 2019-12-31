@@ -1,0 +1,21 @@
+server:
+  port: 8091
+
+spring:
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/prs
+    username: root
+    password: password
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL5Dialect
+        show-sql: true
+        format-sql: true
+  data:
+    web:
+      pageable:
+        one-indexed-parameters: true
