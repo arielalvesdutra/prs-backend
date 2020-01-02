@@ -12,12 +12,13 @@ import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import javax.persistence.Entity;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import static dev.arielalvesdutra.prs.factories.CategoryFactory.newCategory;
+import static dev.arielalvesdutra.prs.factories.CategoryFactory.newCategoryWithId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.atLeastOnce;
@@ -38,8 +39,8 @@ public class CategoryServiceTest {
 
     @Test
     public void createCategory_shouldWork() {
-        Category categoryToCreate = buildCategory();
-        Category expectedCategory = buildCategoryWithId();
+        Category categoryToCreate = newCategory();
+        Category expectedCategory = newCategoryWithId();
         given(this.categoryRepository.save(categoryToCreate)).willReturn(expectedCategory);
 
         Category createdCategory = this.categoryService.create(categoryToCreate);
@@ -54,7 +55,7 @@ public class CategoryServiceTest {
 
     @Test
     public void findCategoryById_shouldReturnCategory() {
-        Category expectedCategory = buildCategoryWithId();
+        Category expectedCategory = newCategoryWithId();
         Long categoryId = 1L;
         given(categoryRepository.findById(categoryId)).willReturn(Optional.of(expectedCategory));
 
@@ -69,8 +70,8 @@ public class CategoryServiceTest {
     }
 
     @Test
-    public void findAllCategories_shouldReturnAllCategoriesOnList() {
-        Category expectedCategory = buildCategoryWithId();
+    public void findAllCategories_shouldReturnAllCategoriesList() {
+        Category expectedCategory = newCategoryWithId();
         given(categoryRepository.findAll()).willReturn(Arrays.asList(expectedCategory));
 
         List<Category> fetchedCategories = categoryService.findAll();
@@ -80,9 +81,9 @@ public class CategoryServiceTest {
     }
 
     @Test
-    public void findAllCategories_withPageable_shouldReturnAllCategoriesOnPage() {
+    public void findAllCategories_withPageable_shouldReturnAllCategoriesPage() {
         Pageable pageable = PageRequest.of(0, 10, Sort.by("name"));
-        Category expectedCategory = buildCategoryWithId();
+        Category expectedCategory = newCategoryWithId();
         List<Category> expectedList = Arrays.asList(expectedCategory);
         given(categoryRepository.findAll(pageable))
                 .willReturn(new PageImpl<Category>(expectedList, pageable, 10));
@@ -97,7 +98,7 @@ public class CategoryServiceTest {
 
     @Test
     public void updateCategory_shouldReturnUpdatedCategory() {
-        Category category = buildCategoryWithId();
+        Category category = newCategoryWithId();
         Long categoryId = 1L;
         given(categoryRepository.findById(categoryId)).willReturn(Optional.of(category));
 
@@ -118,7 +119,7 @@ public class CategoryServiceTest {
 
     @Test
     public void deleteCategoryById_shouldDeleteCategory() {
-        Category categoryToDelete = buildCategoryWithId();
+        Category categoryToDelete = newCategoryWithId();
         given(categoryRepository.findById(categoryToDelete.getId())).willReturn(Optional.of(categoryToDelete));
 
         categoryService.deleteById(categoryToDelete.getId());
@@ -129,17 +130,5 @@ public class CategoryServiceTest {
     @Test
     public void mustHaveServiceAnnotation() {
         assertThat(CategoryService.class.isAnnotationPresent(Service.class)).isTrue();
-    }
-
-    private Category buildCategory() {
-        return new CategoryBuilder()
-                .withName("Categoria")
-                .withDescription("Descrição")
-                .withCreatedAt(Instant.now())
-                .build();
-    }
-
-    private Category buildCategoryWithId() {
-        return buildCategory().setId(1L);
     }
 }

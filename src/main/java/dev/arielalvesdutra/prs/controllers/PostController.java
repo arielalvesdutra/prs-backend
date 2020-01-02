@@ -1,7 +1,8 @@
 package dev.arielalvesdutra.prs.controllers;
 
-import dev.arielalvesdutra.prs.controllers.dto.*;
-import dev.arielalvesdutra.prs.entities.Category;
+import dev.arielalvesdutra.prs.controllers.dto.CreatePostDTO;
+import dev.arielalvesdutra.prs.controllers.dto.RetrievePostDTO;
+import dev.arielalvesdutra.prs.controllers.dto.UpdatePostDTO;
 import dev.arielalvesdutra.prs.entities.Post;
 import dev.arielalvesdutra.prs.services.PostService;
 import org.springframework.beans.factory.annotation.Autowired;
