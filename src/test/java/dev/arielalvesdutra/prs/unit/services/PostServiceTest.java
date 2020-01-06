@@ -20,6 +20,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import static dev.arielalvesdutra.prs.factories.CategoryFactory.newCategoryWithId;
+import static dev.arielalvesdutra.prs.factories.PostFactory.newPost;
+import static dev.arielalvesdutra.prs.factories.PostFactory.newPostWithId;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.atLeastOnce;
@@ -43,8 +46,10 @@ public class PostServiceTest {
 
     @Test
     public void createPost_shouldWork() {
-        Post postToCreate = buildPost();
-        Post expectedPost = buildPostWithId();
+        Post postToCreate = newPost();
+        Category category = newCategoryWithId();
+        postToCreate.setCategory(category);
+        Post expectedPost = newPostWithId();
         given(this.postRepository.save(postToCreate)).willReturn(expectedPost);
 
         Post createdPost = this.postService.create(postToCreate);
@@ -60,7 +65,7 @@ public class PostServiceTest {
 
     @Test
     public void findPostById_shouldReturnPost() {
-        Post expectedPost = buildPostWithId();
+        Post expectedPost = newPostWithId();
         Long postId = 1L;
         given(postRepository.findById(postId)).willReturn(Optional.of(expectedPost));
 
@@ -77,7 +82,7 @@ public class PostServiceTest {
 
     @Test
     public void findAllPosts_shouldReturnAllPostsOnList() {
-        Post expectedPost = buildPostWithId();
+        Post expectedPost = newPostWithId();
         given(postRepository.findAll()).willReturn(Arrays.asList(expectedPost));
 
         List<Post> fetchedPosts = postService.findAll();
@@ -89,7 +94,7 @@ public class PostServiceTest {
     @Test
     public void findAllPosts_withPageable_shouldReturnAllPostsOnPage() {
         Pageable pageable = PageRequest.of(0, 10, Sort.by("name"));
-        Post expectedPost = buildPostWithId();
+        Post expectedPost = newPostWithId();
         List<Post> expectedList = Arrays.asList(expectedPost);
         given(postRepository.findAll(pageable))
                 .willReturn(new PageImpl<Post>(expectedList, pageable, 10));
@@ -104,8 +109,8 @@ public class PostServiceTest {
 
     @Test
     public void updatePost_shouldReturnUpdatedPost() {
-        Post post = buildPostWithId();
-        Category category = buildCategoryWithId();
+        Post post = newPostWithId();
+        Category category = newCategoryWithId();
         Long postId = 1L;
         given(postRepository.findById(postId)).willReturn(Optional.of(post));
 
@@ -128,7 +133,7 @@ public class PostServiceTest {
 
     @Test
     public void deletePostById_shouldDeletePost() {
-        Post postToDelete = buildPostWithId();
+        Post postToDelete = newPostWithId();
         given(postRepository.findById(postToDelete.getId())).willReturn(Optional.of(postToDelete));
 
         postService.deleteById(postToDelete.getId());
@@ -139,21 +144,6 @@ public class PostServiceTest {
     @Test
     public void mustHaveServiceAnnotation() {
         assertThat(PostService.class.isAnnotationPresent(Service.class)).isTrue();
-    }
-
-    private Post buildPost() {
-        Category category = buildCategoryWithId();
-        return new PostBuilder()
-                .withTitle("Titulo do Post")
-                .withSubtitle("Subtítulo")
-                .withBody("Corpo do post")
-                .withCategory(category)
-                .withCreatedAt(Instant.now())
-                .build();
-    }
-
-    private Post buildPostWithId() {
-        return buildPost().setId(1L);
     }
 
     private Category buildCategoryWithId() {

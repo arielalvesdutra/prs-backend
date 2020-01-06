@@ -3,9 +3,10 @@ package dev.arielalvesdutra.prs.it.controllers;
 import dev.arielalvesdutra.prs.builders.CategoryBuilder;
 import dev.arielalvesdutra.prs.builders.PostBuilder;
 import dev.arielalvesdutra.prs.builders.dto.CreatePostDTOBuilder;
-import dev.arielalvesdutra.prs.builders.dto.UpdateCategoryDTOBuilder;
 import dev.arielalvesdutra.prs.builders.dto.UpdatePostDTOBuilder;
-import dev.arielalvesdutra.prs.controllers.dto.*;
+import dev.arielalvesdutra.prs.controllers.dto.CreatePostDTO;
+import dev.arielalvesdutra.prs.controllers.dto.RetrievePostDTO;
+import dev.arielalvesdutra.prs.controllers.dto.UpdatePostDTO;
 import dev.arielalvesdutra.prs.entities.Category;
 import dev.arielalvesdutra.prs.entities.Post;
 import dev.arielalvesdutra.prs.repositories.CategoryRepository;
@@ -82,6 +83,7 @@ public class PostControllerIT {
 
         assertThat(response)
                 .describedAs("Retorno da requisição não pode ser nulo").isNotNull();
+        assertThat(response.getStatusCodeValue()).isEqualTo(201);
         assertThat(retrieveDto).isNotNull();
         assertThat(retrieveDto.getId()).isNotNull();
         assertThat(retrieveDto.getCreatedAt()).isNotNull();

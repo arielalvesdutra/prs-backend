@@ -1,8 +1,5 @@
 package dev.arielalvesdutra.prs.it.controllers;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
-
 import dev.arielalvesdutra.prs.builders.CategoryBuilder;
 import dev.arielalvesdutra.prs.builders.dto.CreateCategoryDTOBuilder;
 import dev.arielalvesdutra.prs.builders.dto.UpdateCategoryDTOBuilder;
@@ -31,6 +28,9 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 @RunWith(SpringRunner.class)
 @ActiveProfiles("it")
@@ -69,6 +69,7 @@ public class CategoryControllerIT {
 
         assertThat(response)
                 .describedAs("Retorno da requisição não pode ser nulo").isNotNull();
+        assertThat(response.getStatusCodeValue()).isEqualTo(201);
         assertThat(retrieveDto.getId()).isNotNull();
         assertThat(retrieveDto.getCreatedAt()).isNotNull();
         assertThat(retrieveDto.getName()).isEqualTo(createDto.getName());

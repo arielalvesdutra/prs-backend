@@ -1,14 +1,19 @@
 package dev.arielalvesdutra.prs.unit.entities;
 
+import static dev.arielalvesdutra.prs.factories.PostFactory.newPostWithId;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import dev.arielalvesdutra.prs.entities.Category;
+import dev.arielalvesdutra.prs.entities.Post;
+import dev.arielalvesdutra.prs.factories.PostFactory;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.persistence.Entity;
 import java.time.Instant;
+import java.util.HashSet;
+import java.util.Set;
 
 @RunWith(SpringRunner.class)
 public class CategoryTest {
@@ -31,6 +36,18 @@ public class CategoryTest {
         assertThat(category.getName()).isEqualTo(name);
         assertThat(category.getDescription()).isEqualTo(description);
         assertThat(category.getCreatedAt()).isEqualTo(createdAt);
+    }
+
+    @Test
+    public void setAndGetPosts_shouldWork() {
+        Post post = newPostWithId();
+        Set<Post> posts = new HashSet<>();
+        posts.add(post);
+        Category category = new Category();
+
+        category.setPosts(posts);
+
+        assertThat(category.getPosts()).isEqualTo(posts);
     }
 
     @Test
