@@ -1,19 +1,16 @@
 package dev.arielalvesdutra.prs.it.controllers;
 
-import dev.arielalvesdutra.prs.builders.CategoryBuilder;
 import dev.arielalvesdutra.prs.builders.PostBuilder;
 import dev.arielalvesdutra.prs.builders.dto.CreatePostDTOBuilder;
 import dev.arielalvesdutra.prs.builders.dto.UpdatePostDTOBuilder;
 import dev.arielalvesdutra.prs.controllers.dto.CreatePostDTO;
 import dev.arielalvesdutra.prs.controllers.dto.RetrievePostDTO;
 import dev.arielalvesdutra.prs.controllers.dto.UpdatePostDTO;
-import dev.arielalvesdutra.prs.entities.Category;
-import dev.arielalvesdutra.prs.entities.Post;
-import dev.arielalvesdutra.prs.repositories.CategoryRepository;
-import dev.arielalvesdutra.prs.repositories.PostRepository;
-import dev.arielalvesdutra.prs.services.CategoryService;
-import dev.arielalvesdutra.prs.services.PostService;
+import dev.arielalvesdutra.prs.entities.*;
+import dev.arielalvesdutra.prs.repositories.*;
+import dev.arielalvesdutra.prs.services.*;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,10 +26,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
+import static dev.arielalvesdutra.prs.factories.CategoryFactory.newCategory;
+import static dev.arielalvesdutra.prs.factories.RoleFactory.newRole;
+import static dev.arielalvesdutra.prs.factories.UserFactory.newUser;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
@@ -43,36 +41,75 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 public class PostControllerIT {
 
     @Autowired
+    private CategoryService categoryService;
+
+    @Autowired
+    private PermissionService permissionService;
+
+    @Autowired
     private PostService postService;
 
     @Autowired
-    private PostRepository postRepository;
+    private RoleService roleService;
 
     @Autowired
-    private CategoryService categoryService;
+    private TokenService tokenService;
+
+    @Autowired
+    private UserService userService;
 
     @Autowired
     private CategoryRepository categoryRepository;
 
     @Autowired
+    private PermissionRepository permissionRepository;
+
+    @Autowired
+    private PostRepository postRepository;
+
+    @Autowired
+    private RoleRepository roleRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
     private TestRestTemplate restTemplate;
+
+    private User userForAuth;
+
+    private Role userRole;
+
+    @Before
+    public void setUp() {
+        userForAuth = userService.create(newUser());
+        userRole = roleService.create(newRole());
+        userForAuth.addRole(userRole);
+        userService.updateRoles(userForAuth.getId(), userForAuth.getRoles());
+    }
 
     @After
     public void tearDown() {
         postRepository.deleteAll();
         categoryRepository.deleteAll();
+        userRepository.deleteAll();
+        roleRepository.deleteAll();
+        permissionRepository.deleteAll();
     }
 
     @Test
-    public void createPost_shouldReturnCreatedPostWithStatus201() {
-        Category category = buildAndSaveASimpleCategory();
+    public void createPost_withCreatePostPermission_shouldReturnCreatedPostWithStatus201() {
+        Category category = createCategory();
         CreatePostDTO createDto = new CreatePostDTOBuilder()
                 .withTitle("Post")
                 .withSubtitle("Subtítulo")
                 .withBody("Corpo")
                 .withCategoryId(category.getId())
                 .build();
-        HttpEntity<CreatePostDTO> httpEntity = new HttpEntity<>(createDto, null);
+        createPermissionAndAddToUserRole("posts.create");
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Authorization", generateToken());
+        HttpEntity<CreatePostDTO> httpEntity = new HttpEntity<>(createDto, headers);
 
         ResponseEntity<RetrievePostDTO> response = this.restTemplate.exchange(
                 "/posts",
@@ -94,14 +131,18 @@ public class PostControllerIT {
     }
 
     @Test
-    public void retrieveAllPosts_withPagination_shouldWork() {
-        Post createdPost = buildAndSaveASimplePost();
+    public void retrieveAllPosts_withReadPostsPermission_andWithPagination_shouldWork() {
+        Post createdPost = createPostWithCategory();
         RetrievePostDTO expectedPost = new RetrievePostDTO(createdPost);
+        createPermissionAndAddToUserRole("posts.read");
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Authorization", generateToken());
+        HttpEntity<?> httpEntity = new HttpEntity<>(null, headers);
 
         ResponseEntity<PagedModel<RetrievePostDTO>> response = restTemplate.exchange(
                 "/posts",
                 HttpMethod.GET,
-                null,
+                httpEntity,
                 new ParameterizedTypeReference<PagedModel<RetrievePostDTO>>() {});
         PagedModel<RetrievePostDTO> resources = response.getBody();
         List<RetrievePostDTO> posts = new ArrayList<>(resources.getContent());
@@ -112,13 +153,20 @@ public class PostControllerIT {
     }
 
     @Test
-    public void retrievePostById_shouldReturnPost() {
-        Post createdPost = buildAndSaveASimplePost();
+    public void retrievePostById_withReadPostsPermission_shouldReturnPost() {
+        Post createdPost = createPostWithCategory();
         RetrievePostDTO expectedPost = new RetrievePostDTO(createdPost);
+        createPermissionAndAddToUserRole("posts.read");
         String url = "/posts/" + expectedPost.getId();
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Authorization", generateToken());
+        HttpEntity<?> httpEntity = new HttpEntity<>(null, headers);
 
         ResponseEntity<RetrievePostDTO> response =
-                restTemplate.getForEntity(url, RetrievePostDTO.class);
+                restTemplate.exchange(url,
+                        HttpMethod.GET,
+                        httpEntity,
+                        RetrievePostDTO.class);
         RetrievePostDTO retrievedPostDto = response.getBody();
 
         assertThat(response.getStatusCodeValue()).isEqualTo(200);
@@ -126,14 +174,18 @@ public class PostControllerIT {
     }
 
     @Test
-    public void deletePostById_shouldWork() {
-        Post createdPost = buildAndSaveASimplePost();
+    public void deletePostById_withDeletePostsPermission_shouldWork() {
+        Post createdPost = createPostWithCategory();
         String url = "/posts/" + createdPost.getId();
+        createPermissionAndAddToUserRole("posts.delete");
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Authorization", generateToken());
+        HttpEntity<?> httpEntity = new HttpEntity<>(null, headers);
 
         ResponseEntity<String> response = restTemplate.exchange(
                 url,
                 HttpMethod.DELETE,
-                null,
+                httpEntity,
                 String.class);
         Optional<Post> fetchedPost = postRepository.findById(createdPost.getId());
 
@@ -142,16 +194,18 @@ public class PostControllerIT {
     }
 
     @Test
-    public void updatePostById_shouldWork() {
-        Post createdPost = buildAndSaveASimplePost();
-        Category category = buildAndSaveASimpleCategory();
+    public void updatePostById_withUpdatePostsPermission_shouldWork() {
+        Post createdPost = createPostWithCategory();
+        Category newCategory = createCategory();
         String url = "/posts/" + createdPost.getId();
+        createPermissionAndAddToUserRole("posts.update");
         HttpHeaders headers = new HttpHeaders();
+        headers.add("Authorization", generateToken());
         UpdatePostDTO updateDto = new UpdatePostDTOBuilder()
                 .withTitle("Post")
                 .withSubtitle("Subtítulo")
                 .withBody("Corpo")
-                .withCategoryId(category.getId())
+                .withCategoryId(newCategory.getId())
                 .build();
         HttpEntity<UpdatePostDTO> httpEntity = new HttpEntity<>(updateDto, headers);
 
@@ -167,28 +221,33 @@ public class PostControllerIT {
         assertThat(responsePost.getTitle()).isEqualTo(updateDto.getTitle());
         assertThat(responsePost.getSubtitle()).isEqualTo(updateDto.getSubtitle());
         assertThat(responsePost.getBody()).isEqualTo(updateDto.getBody());
-        assertThat(responsePost.getCategory().getId()).isEqualTo(category.getId());
+        assertThat(responsePost.getCategory().getId()).isEqualTo(newCategory.getId());
         assertThat(responsePost.getCreatedAt()).isEqualTo(createdPost.getCreatedAt());
     }
 
-    private Post buildAndSaveASimplePost() {
-        Category category = buildAndSaveASimpleCategory();
+    private Post createPostWithCategory() {
         Post post = new PostBuilder()
                 .withTitle("Post")
                 .withSubtitle("Subtítulo")
                 .withBody("Corpo")
-                .withCategory(category)
+                .withCategory(createCategory())
                 .build();
 
         return postService.create(post);
     }
 
-    private Category buildAndSaveASimpleCategory() {
-        Category category = new CategoryBuilder()
-                .withName("Categoria")
-                .withDescription("Descrição")
-                .build();
+    private Category createCategory() {
+        return categoryService.create(newCategory());
+    }
 
-        return categoryService.create(category);
+    private String generateToken() {
+        return "Bearer " + tokenService.generateToken(userForAuth);
+    }
+
+    private Permission createPermissionAndAddToUserRole(String permissionName) {
+        Permission permission = permissionService.create(new Permission(permissionName));
+        userRole.setPermissions(new HashSet<>(Arrays.asList(permission)));
+        roleService.updatePermissions(userRole.getId(), userRole.getPermissions());
+        return  permission;
     }
 }

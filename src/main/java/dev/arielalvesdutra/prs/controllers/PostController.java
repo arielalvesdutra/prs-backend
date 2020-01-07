@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -23,6 +24,7 @@ public class PostController {
     @Autowired
     private PostService postService;
 
+    @PreAuthorize("hasAuthority('posts.create')")
     @RequestMapping(method = RequestMethod.POST)
     public ResponseEntity<RetrievePostDTO> create(
             @Valid @RequestBody CreatePostDTO createDto, UriComponentsBuilder uriBuilder) {
@@ -35,6 +37,7 @@ public class PostController {
         return ResponseEntity.created(uri).body(new RetrievePostDTO(createdPost));
     }
 
+    @PreAuthorize("hasAuthority('posts.read')")
     @RequestMapping(method = RequestMethod.GET)
     public ResponseEntity<Page<RetrievePostDTO>> retrieveAll(
             @PageableDefault(sort="title", page = 0, size = 10) Pageable pagination) {
@@ -44,6 +47,7 @@ public class PostController {
         return ResponseEntity.ok().body(RetrievePostDTO.toPage(postsPage));
     }
 
+    @PreAuthorize("hasAuthority('posts.read')")
     @RequestMapping(method = RequestMethod.GET, path = "/{postId}")
     public ResponseEntity<RetrievePostDTO> retrieveById(@PathVariable Long postId) {
 
@@ -52,6 +56,7 @@ public class PostController {
         return ResponseEntity.ok().body(new RetrievePostDTO(post));
     }
 
+    @PreAuthorize("hasAuthority('posts.delete')")
     @RequestMapping(method = RequestMethod.DELETE, path = "/{postId}")
     public ResponseEntity<?> deleteById(@PathVariable Long postId) {
 
@@ -60,6 +65,7 @@ public class PostController {
         return ResponseEntity.ok().build();
     }
 
+    @PreAuthorize("hasAuthority('posts.update')")
     @RequestMapping(method = RequestMethod.PUT, path = "/{postId}")
     public ResponseEntity<RetrievePostDTO> updateById(
             @PathVariable Long postId,
