@@ -1,9 +1,6 @@
 package dev.arielalvesdutra.prs.entities;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 import lombok.experimental.Accessors;
 
 import javax.persistence.*;
@@ -14,6 +11,7 @@ import java.util.Set;
 @Entity
 @EqualsAndHashCode(of = "id")
 @ToString
+@NoArgsConstructor
 public class Permission {
 
     @Id
@@ -36,4 +34,8 @@ public class Permission {
     @ManyToMany(mappedBy = "permissions")
     @Getter @Setter @Accessors(chain = true)
     private Set<Role> roles = new HashSet<>();
+
+    public Permission(String name) {
+        setName(name);
+    }
 }

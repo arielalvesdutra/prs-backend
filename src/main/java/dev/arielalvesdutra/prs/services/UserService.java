@@ -5,6 +5,7 @@ import dev.arielalvesdutra.prs.entities.User;
 import dev.arielalvesdutra.prs.repositories.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -24,6 +25,10 @@ public class UserService {
     }
 
     public User create(User user) {
+        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+
         return userRepository.save(user);
     }
 

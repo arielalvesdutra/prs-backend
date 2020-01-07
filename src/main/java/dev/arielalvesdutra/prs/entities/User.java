@@ -28,7 +28,7 @@ public class User implements UserDetails {
     private String email;
     @Getter @Setter @Accessors(chain = true)
     private String password;
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "user_role",
             joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id"))
@@ -75,5 +75,9 @@ public class User implements UserDetails {
     @Override
     public boolean isEnabled() {
         return true;
+    }
+
+    public void addRole(Role role) {
+        this.getRoles().add(role);
     }
 }
