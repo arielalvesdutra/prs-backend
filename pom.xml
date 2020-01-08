@@ -10,9 +10,9 @@
 	</parent>
 	<groupId>dev.arielalvesdutra</groupId>
 	<artifactId>prs</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.1.0.RELEASE</version>
 	<name>prs</name>
-	<description>Demo project for Spring Boot</description>
+	<description>Projeto para praticar o uso Autorização por Permissão</description>
 
 	<properties>
 		<java.version>1.8</java.version>
